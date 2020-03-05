@@ -6,16 +6,120 @@ import Select from "react-select";
 
 import matchSorter from "match-sorter";
 
+
+// DATA
 // if data changes often, fetch from URL (axios) 
 // if data set is huge, use a database
+// for now:
 import pokedexData from '../data/pokedex.json'
-// build list of unique types and weaknesses
+// build lists of unique types and weaknesses
 const types = pokedexData.pokemon.reduce((tally,p)=>{
   return [...new Set( [...tally, ...p.type] )] // use a loop if perf becomes an issue
 },[]).sort()
 const weaknesses = pokedexData.pokemon.reduce((tally,p)=>{
   return [...new Set( [...tally, ...p.weaknesses] )]
 },[]).sort()
+
+
+// FILTERING ON TYPES AND WEAKNESSES
+
+/** 
+ * menu dropdown to select multiple filters of "types" and "weaknesses"
+ * 
+ * usage: SelectColumnFilterMulti(options)
+ * where: options === array of strings
+ * ex:    ["Grass", "Poison", ...] 
+ * 
+ * returns: a function that will be called by react-table
+ *          internally. This function returns JSX for the
+ *          multi-select dropdown
+ */
+const SelectColumnFilterMulti = (options) => ({column}) => {
+  const { filterValue, setFilter} = column;
+  const customSelectStyles = {
+    menu: (provided, state) => ({
+      ...provided,
+      textAlign: 'left',
+      width: '400px',
+    }),
+  }
+  return (
+    <Select
+      className="select-column-filter-multi"
+      isMulti={true}
+      isSearchable={true}
+      placeholder="Select ..."
+      styles={customSelectStyles}
+      value={filterValue}
+      onChange={selectedOptions => {
+        setFilter(selectedOptions);
+      }}
+      options={options.map((w, i) => {
+        return { id: i+1, value: w, label: w };
+      })}
+    />
+  );
+}
+/**
+ * Filter logic for multiple filters applied to the array of
+ * Pokemon "types" or "weaknesses"
+ */
+function arrayIncludesAllOfFilterFn(rows, id, filterValue) {
+  return rows.filter(row => {
+    const rowValue = row.values[id];
+    if (rowValue === undefined) return true;
+    // single select filter - currently unused
+    if (typeof filterValue === 'string' || filterValue instanceof String) {
+      return rowValue.includes(filterValue);
+    }
+    // multiple select filter
+    if (Array.isArray(filterValue)) {
+      // [].every() returns true if every element passes the test
+      // [].includes() returns true if the element is a member of rowValue
+      return filterValue.every(element => rowValue.includes(element.value));
+    }
+    return true;
+  });
+}
+
+
+// FILTERING ON POKEMON NAME
+
+// Define a default UI for filtering
+const StyledInput = styled.input`
+  font-weight: 700;
+  color: #808080;
+  border: 1px solid #cccccc;
+  borderRadius: 0.25rem;
+  width: 100%;
+  lineHeight: 1.5;
+  padding: 0.3rem;
+  ::placeholder {
+    color: #808080;
+  }
+`
+const  DefaultColumnFilter = ({
+  column: { filterValue, preFilteredRows, setFilter }
+}) => {
+  return (
+    <StyledInput
+      value={filterValue || ""}
+      onChange={e => {
+        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
+      }}
+      placeholder={`Search ...`}
+    />
+  );
+}
+// Add a fuzzy filter type.
+function fuzzyTextFilterFn(rows, id, filterValue) {
+  return matchSorter(rows, filterValue, { keys: [row => row.values[id]] });
+}
+// Let the table remove the filter if the string is empty
+fuzzyTextFilterFn.autoRemove = val => !val;
+
+
+// PUT TOGETHER THE TABLE
 
 const Styles = styled.div`
   padding: 1rem;
@@ -54,89 +158,6 @@ const Styles = styled.div`
   }
 `;
 
-// Define a default UI for filtering
-const StyledInput = styled.input`
-  font-weight: 700;
-  color: #808080;
-  border: 1px solid #cccccc;
-  borderRadius: 0.25rem;
-  width: 100%;
-  lineHeight: 1.5;
-  padding: 0.3rem;
-  ::placeholder {
-    color: #808080;
-  }
-`
-const  DefaultColumnFilter = ({
-  column: { filterValue, preFilteredRows, setFilter }
-}) => {
-  return (
-    <StyledInput
-      value={filterValue || ""}
-      onChange={e => {
-        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
-      }}
-      placeholder={`Search ...`}
-    />
-  );
-}
-
-// Filter on multiple items
-// to avoid confusing the user, the select options are 
-// NOT dynamic based on preFilteredRows (the result of current filters)
-const SelectColumnFilterMulti = (options) => ({column}) => {
-  const { filterValue, setFilter, preFilteredRows, id } = column;
-  const customSelectStyles = {
-    menu: (provided, state) => ({
-      ...provided,
-      textAlign: 'left',
-      width: '400px',
-    }),
-  }
-  return (
-    <Select
-      className="select-column-filter-multi"
-      isMulti={true}
-      isSearchable={true}
-      placeholder="Select ..."
-      styles={customSelectStyles}
-      value={filterValue}
-      onChange={selectedOptions => {
-        setFilter(selectedOptions);
-      }}
-      options={options.map((w, i) => {
-        return { id: i+1, value: w, label: w };
-      })}
-    />
-  );
-}
-
-// Add a new fuzzyTextFilterFn filter type.
-function fuzzyTextFilterFn(rows, id, filterValue) {
-  return matchSorter(rows, filterValue, { keys: [row => row.values[id]] });
-}
-// Let the table remove the filter if the string is empty
-fuzzyTextFilterFn.autoRemove = val => !val;
-
-// filter on single or multiple Pokemon "types" or "weaknesses"
-function arrayIncludesAllOfFilterFn(rows, id, filterValue) {
-  return rows.filter(row => {
-    const rowValue = row.values[id];
-    if (rowValue === undefined) return true;
-    // single select filter
-    if (typeof filterValue === 'string' || filterValue instanceof String) {
-      return rowValue.includes(filterValue);
-    }
-    // multiple select filter
-    if (Array.isArray(filterValue)) {
-      // [].every() returns true if every element passes the test
-      // [].includes() returns true if the element is a member of rowValue
-      return filterValue.every(element => rowValue.includes(element.value));
-    }
-    return true;
-  });
-}
-
 const Table = ({ columns, data }) => {
 
   const filterTypes = React.useMemo(
@@ -160,7 +181,7 @@ const Table = ({ columns, data }) => {
 
   const defaultColumn = React.useMemo(
     () => ({
-      Filter: DefaultColumnFilter // default Filter UI
+      Filter: DefaultColumnFilter // default Filter UI (filtering Pokemon name)
     }),
     []
   );

@@ -1,4 +1,5 @@
 
+2020-03-05:15:30 updated with better code documentation
 
 [**Demo**](https://peaceful-kepler-6d4a4f.netlify.com/)
 
@@ -14,7 +15,7 @@
 
 ### CSS
 * implement all CSS as Tailwind utility classes. I'm warming up to the [benefits](https://tailwindcss.com/docs/utility-first) of this approach.
-  * for this exercise, I think vanilla CSS is more clear 
+  * for this exercise, using vanilla CSS 
 
 ### The table
 * pagination - solves filters not in viewport when you scroll and larger data set
