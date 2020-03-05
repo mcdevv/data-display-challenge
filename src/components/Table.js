@@ -30,7 +30,7 @@ const Styles = styled.div`
       }
     }
     th {
-      text-align: center;
+      text-align: left;
     }
     td {
       text-align: left;
@@ -64,7 +64,7 @@ const StyledInput = styled.input`
   lineHeight: 1.5;
   padding: 0.3rem;
   ::placeholder {
-    color: purple;
+    color: #808080;
   }
 `
 const  DefaultColumnFilter = ({
