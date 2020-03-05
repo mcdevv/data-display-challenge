@@ -111,21 +111,23 @@ const SelectColumnFilterMulti = (options) => ({column}) => {
   );
 }
 
-// Add a new fuzzyTextFilterFn filter type. todo: not sure how fuzzy this is
+// Add a new fuzzyTextFilterFn filter type.
 function fuzzyTextFilterFn(rows, id, filterValue) {
   return matchSorter(rows, filterValue, { keys: [row => row.values[id]] });
 }
 // Let the table remove the filter if the string is empty
 fuzzyTextFilterFn.autoRemove = val => !val;
 
-// filter on multiple types or weaknesses
+// filter on single or multiple Pokemon "types" or "weaknesses"
 function arrayIncludesAllOfFilterFn(rows, id, filterValue) {
   return rows.filter(row => {
     const rowValue = row.values[id];
     if (rowValue === undefined) return true;
+    // single select filter
     if (typeof filterValue === 'string' || filterValue instanceof String) {
       return rowValue.includes(filterValue);
     }
+    // multiple select filter
     if (Array.isArray(filterValue)) {
       // [].every() returns true if every element passes the test
       // [].includes() returns true if the element is a member of rowValue

@@ -1,6 +1,6 @@
 
 
-[Demo](https://peaceful-kepler-6d4a4f.netlify.com/)
+[**Demo**](https://peaceful-kepler-6d4a4f.netlify.com/)
 
 ## Next steps would be:
 
@@ -33,6 +33,11 @@
 * check perf in case data grows
 * react-table docs suggest useMemo which may be unnecessary optimization. Always test perf before optimizing to avoid making things unnecessarily worse by over-optimizing
   * react-table docs said to useMemo, so I did so for this exercise. todo: investigate further
+
+### In-context help and tutorial/tour
+* tooltips to answer predictable questions and common user questions
+* ex: describe the fuzzy search on the first column
+* ex: anything confusing in the data itself
 
 ### Check code clarity and naming conventions
 * re-visit after a few days with fresh eyes
