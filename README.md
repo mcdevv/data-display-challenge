@@ -2,6 +2,7 @@
 2020-03-05:15:30 updated with better code documentation
 
 [**CodeSandbox**](https://codesandbox.io/s/github/mcdevv/data-display-challenge)
+
 [**Netlify**](https://peaceful-kepler-6d4a4f.netlify.com/)
 
 ## Next steps would be:
