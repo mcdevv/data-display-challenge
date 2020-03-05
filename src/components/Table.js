@@ -1,19 +1,15 @@
 import React from "react";
-
 import styled from "styled-components";
-import tw from "tailwind.macro";
 
 import { useTable, useFilters, useGlobalFilter } from "react-table";
-
 import Select from "react-select";
 
-// A great library for fuzzy filtering/sorting items
 import matchSorter from "match-sorter";
 
 // if data changes often, fetch from URL (axios) 
 // if data set is huge, use a database
 import pokedexData from '../data/pokedex.json'
-// build unique types and weaknesses
+// build list of unique types and weaknesses
 const types = pokedexData.pokemon.reduce((tally,p)=>{
   return [...new Set( [...tally, ...p.type] )] // use a loop if perf becomes an issue
 },[]).sort()
@@ -26,8 +22,6 @@ const Styles = styled.div`
 
   table {
     border-spacing: 0;
-    border: 1px solid gray;
-
     tr {
       :last-child {
         td {
@@ -35,18 +29,20 @@ const Styles = styled.div`
         }
       }
     }
-
+    th {
+      text-align: center;
+    }
+    td {
+      text-align: left;
+    }
     th,
     td {
       margin: 0;
       padding: 0.5rem;
-      border-bottom: 1px solid gray;
-      border-right: 1px solid gray;
       vertical-align: top;
       :last-child {
         border-right: 0;
       }
-      white-space: nowrap;
     }
   }
   .select-column-filter-multi {
@@ -59,40 +55,44 @@ const Styles = styled.div`
 `;
 
 // Define a default UI for filtering
+const StyledInput = styled.input`
+  font-weight: 700;
+  color: #808080;
+  border: 1px solid #cccccc;
+  borderRadius: 0.25rem;
+  width: 100%;
+  lineHeight: 1.5;
+  padding: 0.3rem;
+  ::placeholder {
+    color: purple;
+  }
+`
 const  DefaultColumnFilter = ({
   column: { filterValue, preFilteredRows, setFilter }
 }) => {
-  const count = preFilteredRows.length;
-
   return (
-    <input
+    <StyledInput
       value={filterValue || ""}
       onChange={e => {
         setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
       }}
-      placeholder={`Search ${count} records ...`}
-      style={{
-        //fontSize: "1rem",
-        fontWeight: '700',
-        color: '#808080',
-        border: "1px solid gray",
-      }}
+      placeholder={`Search ...`}
     />
   );
 }
 
-
 // Filter on multiple items
+// to avoid confusing the user, the select options are 
+// NOT dynamic based on preFilteredRows (the result of current filters)
 const SelectColumnFilterMulti = (options) => ({column}) => {
   const { filterValue, setFilter, preFilteredRows, id } = column;
   const customSelectStyles = {
     menu: (provided, state) => ({
       ...provided,
       textAlign: 'left',
-      width: '500px',
+      width: '400px',
     }),
   }
-  // Render a multi-select box
   return (
     <Select
       className="select-column-filter-multi"
@@ -105,27 +105,23 @@ const SelectColumnFilterMulti = (options) => ({column}) => {
         setFilter(selectedOptions);
       }}
       options={options.map((w, i) => {
-          //console.log('weakness value: ', w)
-          return { id: i+1, value: w, label: w };
-        })
-      }
+        return { id: i+1, value: w, label: w };
+      })}
     />
   );
 }
 
-// Add a new fuzzyTextFilterFn filter type.
+// Add a new fuzzyTextFilterFn filter type. todo: not sure how fuzzy this is
 function fuzzyTextFilterFn(rows, id, filterValue) {
   return matchSorter(rows, filterValue, { keys: [row => row.values[id]] });
 }
 // Let the table remove the filter if the string is empty
 fuzzyTextFilterFn.autoRemove = val => !val;
 
-
+// filter on multiple types or weaknesses
 function arrayIncludesAllOfFilterFn(rows, id, filterValue) {
-  console.log(rows, id, filterValue)
   return rows.filter(row => {
     const rowValue = row.values[id];
-    console.log(rowValue,filterValue)
     if (rowValue === undefined) return true;
     if (typeof filterValue === 'string' || filterValue instanceof String) {
       return rowValue.includes(filterValue);
@@ -138,8 +134,6 @@ function arrayIncludesAllOfFilterFn(rows, id, filterValue) {
     return true;
   });
 }
-//arrayIncludesAllOfFilterFn.autoRemove = val => !val;
-
 
 const Table = ({ columns, data }) => {
 
@@ -147,8 +141,7 @@ const Table = ({ columns, data }) => {
     () => ({
       fuzzyText: fuzzyTextFilterFn,
       arrayIncludesAllOf: arrayIncludesAllOfFilterFn,
-      // Or, override the default text filter to use
-      // "startWith"
+      // example: override the default text filter to use "startWith"
       text: (rows, id, filterValue) => {
         return rows.filter(row => {
           const rowValue = row.values[id];
@@ -165,8 +158,7 @@ const Table = ({ columns, data }) => {
 
   const defaultColumn = React.useMemo(
     () => ({
-      // Let's set up our default Filter UI
-      Filter: DefaultColumnFilter
+      Filter: DefaultColumnFilter // default Filter UI
     }),
     []
   );
@@ -185,8 +177,8 @@ const Table = ({ columns, data }) => {
       defaultColumn, // Be sure to pass the defaultColumn option
       filterTypes
     },
-    useFilters, // useFilters!
-    useGlobalFilter // useGlobalFilter!
+    useFilters,
+    useGlobalFilter
   );
 
 
@@ -221,13 +213,6 @@ const Table = ({ columns, data }) => {
           })}
         </tbody>
       </table>
-      <br />
-      <div>The below visible to Web dev team only:</div>
-      <div>
-        <pre>
-          <code>Filters: {JSON.stringify(state.filters, null, 2)}</code>
-        </pre>
-      </div>
     </>
   );
 }
@@ -235,11 +220,8 @@ const Table = ({ columns, data }) => {
 export default () => {
   const columns = React.useMemo(
     () => [
-      {
-        Header: "Pokemon",
-        columns: [
           {
-            Header: "Name",
+            Header: "Pokemon",
             accessor: "name",
             filter: "fuzzyText",
           },
@@ -247,12 +229,7 @@ export default () => {
             Header: "Number",
             accessor: "num",
             disableFilters: true,
-          }
-        ]
-      },
-      {
-        Header: "Characteristics",
-        columns: [
+          },
           {
             Header: "Type",
             accessor: "type",
@@ -267,9 +244,7 @@ export default () => {
             Filter: SelectColumnFilterMulti(weaknesses),
             filter: "arrayIncludesAllOf",
           },
-        ]
-      }
-    ],
+        ],
     []
   );
 
