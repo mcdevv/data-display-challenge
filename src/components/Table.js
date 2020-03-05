@@ -63,7 +63,27 @@ const SelectColumnFilterMulti = (options) => ({column}) => {
 /**
  * Filter logic for multiple filters applied to the array of
  * Pokemon "types" or "weaknesses"
- */
+ * /src/data/pokedex.json looks like:
+   [
+    {
+      "id": 1,
+      "num": "001",
+      "name": "Bulbasaur",
+      "type": [
+        "Grass",
+        "Poison"
+      ],
+      "weaknesses": [
+        "Fire",
+        "Ice",
+        "Flying",
+        "Psychic"
+      ],
+      ... 
+    },
+  ...
+  ]
+    */
 function arrayIncludesAllOfFilterFn(rows, id, filterValue) {
   return rows.filter(row => {
     const rowValue = row.values[id];
